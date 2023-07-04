@@ -31,8 +31,15 @@ end
 
 def find_hour(time)
   begin
-    new_time = Time.strptime(time, '%m/%d/%Y %k:%M')
-    new_time.hour
+    Time.strptime(time, '%m/%d/%Y %k:%M').hour
+  rescue
+    'error'
+  end
+end
+
+def find_day(day)
+  begin
+    Date.strptime(day, '%m/%d/%y %k:%M').wday
   rescue
     'error'
   end
@@ -75,6 +82,7 @@ template_letter = File.read('form_letter.erb')
 erb_template = ERB.new template_letter
 
 hour_hash = {}
+day_hash = {}
 
 contents.each do |row|
   id = row[0]
@@ -91,6 +99,13 @@ contents.each do |row|
     hour_hash[time] = 1
   end
 
+  day = find_day(row[:regdate])
+  if day_hash.key?(day)
+    day_hash[day] += 1
+  else
+    day_hash[day] = 1
+  end
+
   legislators = legislators_by_zipcode(zipcode)
 
   form_letter = erb_template.result(binding)
@@ -98,4 +113,7 @@ contents.each do |row|
   save_thank_you_letter(id, form_letter)
 end
 
+puts "By Hour:"
 print hour_hash.sort_by { |_k, v| v }.reverse
+puts "\nBy Day:"
+print day_hash.sort_by { |_k, v| v }.reverse
